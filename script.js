@@ -1,97 +1,156 @@
-/* General Body & Font Styles */
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f0f2f5;
-    color: #333;
-    margin: 0;
-    padding: 20px;
-}
+document.addEventListener('DOMContentLoaded', function () {
+    
+    // Main function to fetch and process data from the CSV file
+    async function loadDashboardData() {
+        try {
+            const response = await fetch('dates.csv');
+            if (!response.ok) {
+                throw new Error(`Network response was not ok: ${response.statusText}`);
+            }
+            const csvData = await response.text();
+            
+            // Parse the CSV data into an array of date strings
+            // .split('\n') -> splits the text into an array of lines
+            // .slice(1) -> removes the header row ("Date")
+            // .map(row => row.trim()) -> removes any leading/trailing whitespace from each line
+            // .filter(row => row) -> removes any empty lines
+            const dateStrings = csvData.split('\n').slice(1).map(row => row.trim()).filter(row => row);
 
-header {
-    text-align: center;
-    margin-bottom: 20px;
-}
+            if (dateStrings.length === 0) {
+                throw new Error("CSV file is empty or contains no valid date rows.");
+            }
 
-header h1 {
-    color: #1a202c;
-}
+            // 1. Parse and sort dates
+            const parsedDates = dateStrings.map(str => {
+                const [day, month, year] = str.split('/');
+                return new Date(year, month - 1, day);
+            }).sort((a, b) => a - b);
 
-/* Dashboard Grid Layout */
-.dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 20px;
-}
+            // 2. Update Key Stats
+            updateKeyStats(parsedDates);
 
-/* Card Styling */
-.card {
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-}
+            // 3. Generate Weekday Heatmap
+            generateWeekdayHeatmap(parsedDates);
 
-.card h2 {
-    margin-top: 0;
-    font-size: 1.2em;
-    color: #4a5568;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
+            // 4. Generate Year Chart
+            generateYearChart(parsedDates);
 
-/* Stat Card Specifics */
-.stat-card {
-    text-align: center;
-}
+            // 5. Generate Month-Year Chart
+            generateMonthYearChart(parsedDates);
 
-.stat-card p {
-    font-size: 2.5em;
-    font-weight: 600;
-    color: #2d3748;
-    margin: 10px 0 0 0;
-}
+        } catch (error) {
+            console.error("Error loading or processing dashboard data:", error);
+            document.querySelector('main').innerHTML = `<div class="card" style="background-color: #fff5f5; color: #c53030;"><h2>Error</h2><p>Could not load data from dates.csv. Please ensure the file exists in the same folder and you are running this from a web server. Check the console for more details.</p></div>`;
+        }
+    }
 
-/* Heatmap Styling */
-.heatmap {
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-end;
-    height: 150px;
-    padding-top: 10px;
-}
+    // Run the main function to initialize the dashboard
+    loadDashboardData();
 
-.heatmap-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
-    flex-grow: 1;
-}
+    // --- FUNCTION DEFINITIONS (These are the same as before) ---
 
-.heatmap-bar {
-    width: 70%;
-    background-color: #3182ce; /* Base color */
-    border-radius: 4px 4px 0 0;
-    transition: height 0.3s ease-in-out;
-}
+    function updateKeyStats(dates) {
+        document.getElementById('total-count').textContent = dates.length;
+        const options = { year: 'numeric', month: 'short', day: 'numeric' };
+        document.getElementById('earliest-date').textContent = dates[0].toLocaleDateString('en-US', options);
+        document.getElementById('latest-date').textContent = dates[dates.length - 1].toLocaleDateString('en-US', options);
+    }
 
-.heatmap-label {
-    margin-top: 8px;
-    font-size: 0.9em;
-    font-weight: 500;
-}
+    function generateWeekdayHeatmap(dates) {
+        const container = document.getElementById('heatmap-container');
+        const counts = Array(7).fill(0); // 0:Sun, 1:Mon, ..., 6:Sat
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-/* Chart Container Styling */
-.chart-card {
-    /* Ensure charts have enough space to render */
-    min-height: 400px;
-    display: flex;
-    flex-direction: column;
-}
+        dates.forEach(date => {
+            counts[date.getDay()]++;
+        });
 
-/* Ensure canvas takes up available space in the card */
-canvas {
-    flex-grow: 1;
-    max-width: 100%;
-}
+        const maxCount = Math.max(...counts);
+
+        days.forEach((day, index) => {
+            const count = counts[index];
+            const heightPercentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+
+            const col = document.createElement('div');
+            col.className = 'heatmap-col';
+            col.innerHTML = `
+                <div class="heatmap-bar" style="height: ${heightPercentage}%;" title="${day}: ${count} commits"></div>
+                <div class="heatmap-label">${day}</div>
+            `;
+            container.appendChild(col);
+        });
+    }
+
+    function generateYearChart(dates) {
+        const ctx = document.getElementById('year-chart').getContext('2d');
+        const counts = {};
+
+        dates.forEach(date => {
+            const year = date.getFullYear();
+            counts[year] = (counts[year] || 0) + 1;
+        });
+
+        const labels = Object.keys(counts).sort();
+        const data = labels.map(label => counts[label]);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Commits',
+                    data: data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+
+    function generateMonthYearChart(dates) {
+        const ctx = document.getElementById('month-year-chart').getContext('2d');
+        const counts = {};
+
+        dates.forEach(date => {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const key = `${year}-${month}`;
+            counts[key] = (counts[key] || 0) + 1;
+        });
+
+        const sortedKeys = Object.keys(counts).sort();
+        const labels = sortedKeys.map(key => {
+            const [year, month] = key.split('-');
+            const date = new Date(year, month - 1);
+            return date.toLocaleString('en-US', { month: 'short', year: 'numeric' });
+        });
+        const data = sortedKeys.map(key => counts[key]);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Commits',
+                    data: data,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
+});
