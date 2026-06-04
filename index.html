@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Date Analytics Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-text">
+        <p class="header-label">Analytics Overview</p>
+        <h1 class="header-title">Date Dashboard</h1>
+      </div>
+      <div class="header-badge">
+        <span id="total-badge">—</span>
+        <small>entries</small>
+      </div>
+    </div>
+  </header>
+
+  <!-- Live Timer Banner -->
+  <div class="timer-banner" id="timer-banner" style="display:none;">
+    <div class="timer-inner">
+      <div class="timer-label-top">
+        <span class="timer-heart">♡</span>
+        Time since your first entry
+        <span class="timer-heart">♡</span>
+      </div>
+      <div class="timer-units">
+        <div class="timer-unit">
+          <span class="timer-num" id="t-years">0</span>
+          <span class="timer-cap">years</span>
+        </div>
+        <span class="timer-sep">·</span>
+        <div class="timer-unit">
+          <span class="timer-num" id="t-months">0</span>
+          <span class="timer-cap">months</span>
+        </div>
+        <span class="timer-sep">·</span>
+        <div class="timer-unit">
+          <span class="timer-num" id="t-days">0</span>
+          <span class="timer-cap">days</span>
+        </div>
+        <span class="timer-sep">·</span>
+        <div class="timer-unit">
+          <span class="timer-num" id="t-hours">0</span>
+          <span class="timer-cap">hours</span>
+        </div>
+        <span class="timer-sep">·</span>
+        <div class="timer-unit">
+          <span class="timer-num" id="t-mins">0</span>
+          <span class="timer-cap">mins</span>
+        </div>
+        <span class="timer-sep">·</span>
+        <div class="timer-unit">
+          <span class="timer-num" id="t-secs">0</span>
+          <span class="timer-cap">secs</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main class="dashboard">
+
+    <!-- Row 1: Stat Cards -->
+    <section class="stat-row">
+      <div class="stat-card" id="card-total">
+        <div class="stat-icon">📅</div>
+        <div class="stat-body">
+          <p class="stat-label">Total Entries</p>
+          <p class="stat-value" id="stat-total">—</p>
+        </div>
+      </div>
+      <div class="stat-card" id="card-earliest">
+        <div class="stat-icon">🌅</div>
+        <div class="stat-body">
+          <p class="stat-label">Earliest Date</p>
+          <p class="stat-value" id="stat-earliest">—</p>
+        </div>
+      </div>
+      <div class="stat-card" id="card-latest">
+        <div class="stat-icon">🌇</div>
+        <div class="stat-body">
+          <p class="stat-label">Latest Date</p>
+          <p class="stat-value" id="stat-latest">—</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Row 2: Donut + Year Bar -->
+    <section class="chart-row">
+      <div class="chart-card wide">
+        <h2 class="chart-title">Weekday Distribution</h2>
+        <p class="chart-sub">How entries fall across days of the week</p>
+        <div class="donut-wrapper">
+          <canvas id="donutChart"></canvas>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+      </div>
+
+      <div class="chart-card narrow">
+        <h2 class="chart-title">By Year</h2>
+        <p class="chart-sub">Entry count per year</p>
+        <div class="bar-wrapper">
+          <canvas id="yearChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Row 3: Monthly per-year charts -->
+    <section class="section-label-row">
+      <h2 class="section-heading">Monthly Distribution by Year</h2>
+      <p class="section-sub">Entry counts broken down month-by-month for each year</p>
+    </section>
+    <section id="month-charts-container" class="month-grid"></section>
+
+    <!-- Row 4: Top 3 -->
+    <section class="chart-row single">
+      <div class="chart-card narrow top3-card">
+        <h2 class="chart-title">Top 3 Months</h2>
+        <p class="chart-sub">Highest activity by month name, aggregated across all years</p>
+        <div id="top3-list" class="top3-list"></div>
+      </div>
+    </section>
+
+    <!-- Row 5: Heart Calendar -->
+    <section class="section-label-row">
+      <h2 class="section-heading">Your Dates Calendar</h2>
+      <p class="section-sub">Every date in your dataset — marked with love 🤍</p>
+    </section>
+    <section class="chart-row single" id="calendar-section" style="display:none;">
+      <div class="chart-card calendar-card">
+        <div class="cal-nav">
+          <button class="cal-btn" id="cal-prev">&#8592;</button>
+          <div class="cal-month-display">
+            <span class="cal-month-name" id="cal-month-name">—</span>
+            <span class="cal-year-name" id="cal-year-name">—</span>
+          </div>
+          <button class="cal-btn" id="cal-next">&#8594;</button>
+        </div>
+        <div class="cal-jump-row">
+          <input type="month" id="cal-jump-input" class="cal-jump-input" title="Jump to month"/>
+          <button class="cal-jump-btn" id="cal-jump-btn">Go</button>
+        </div>
+        <div class="cal-grid-header">
+          <span>Su</span><span>Mo</span><span>Tu</span><span>We</span>
+          <span>Th</span><span>Fr</span><span>Sa</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <p class="cal-footer-note" id="cal-month-count"></p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>Data sourced from <a href="https://docs.google.com/spreadsheets/d/1-mQ3ndnvVrEtW8aLInPq-vJ4m4bRVciSSinznnAGG7M/edit" target="_blank" style="color:inherit">Google Sheets</a> &nbsp;·&nbsp; Dashboard generated statically</p>
+  </footer>
+
+  <script src="charts.js"></script>
+</body>
+</html>
