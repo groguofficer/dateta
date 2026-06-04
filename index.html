@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Date Analytics Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-text">
+        <p class="header-label">Analytics Overview</p>
+        <h1 class="header-title">Date Dashboard</h1>
+      </div>
+      <div class="header-badge">
+        <span id="total-badge">—</span>
+        <small>entries</small>
+      </div>
+    </div>
+  </header>
+
+  <main class="dashboard">
+
+    <!-- Row 1: Stat Cards -->
+    <section class="stat-row">
+      <div class="stat-card" id="card-total">
+        <div class="stat-icon">📅</div>
+        <div class="stat-body">
+          <p class="stat-label">Total Entries</p>
+          <p class="stat-value" id="stat-total">—</p>
+        </div>
+      </div>
+      <div class="stat-card" id="card-earliest">
+        <div class="stat-icon">🌅</div>
+        <div class="stat-body">
+          <p class="stat-label">Earliest Date</p>
+          <p class="stat-value" id="stat-earliest">—</p>
+        </div>
+      </div>
+      <div class="stat-card" id="card-latest">
+        <div class="stat-icon">🌇</div>
+        <div class="stat-body">
+          <p class="stat-label">Latest Date</p>
+          <p class="stat-value" id="stat-latest">—</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Row 2: Donut + Year Bar -->
+    <section class="chart-row">
+      <div class="chart-card wide">
+        <h2 class="chart-title">Weekday Distribution</h2>
+        <p class="chart-sub">How entries fall across days of the week</p>
+        <div class="donut-wrapper">
+          <canvas id="donutChart"></canvas>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+      </div>
+
+      <div class="chart-card narrow">
+        <h2 class="chart-title">By Year</h2>
+        <p class="chart-sub">Entry count per year</p>
+        <div class="bar-wrapper">
+          <canvas id="yearChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Row 3: Monthly per-year charts -->
+    <section class="section-label-row">
+      <h2 class="section-heading">Monthly Distribution by Year</h2>
+      <p class="section-sub">Entry counts broken down month-by-month for each year</p>
+    </section>
+    <section id="month-charts-container" class="month-grid"></section>
+
+    <!-- Row 4: Top 3 -->
+    <section class="chart-row single">
+      <div class="chart-card narrow top3-card">
+        <h2 class="chart-title">Top 3 Months</h2>
+        <p class="chart-sub">Highest activity by month name, aggregated across all years</p>
+        <div id="top3-list" class="top3-list"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <p>Data sourced from <code>dates.csv</code> &nbsp;·&nbsp; Dashboard generated statically</p>
+  </footer>
+
+  <script src="charts.js"></script>
+</body>
+</html>
